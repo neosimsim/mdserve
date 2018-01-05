@@ -37,15 +37,18 @@ func handle(writer http.ResponseWriter, request *http.Request) {
 		}
 		defer reader.Close()
 		if err = cmd.Start(); err != nil {
+			fmt.Fprintf(writer, err.Error())
 			log.Print("Error running command: ", err)
 			return
 		}
 		writer.Header().Set("Content-Type", "text/html; charset=utf-8")
 		if _, err = io.Copy(writer, reader); err != nil {
+			fmt.Fprintf(writer, err.Error())
 			log.Print("Error copying commands output to writer", err)
 			return
 		}
 		if err = cmd.Wait(); err != nil {
+			fmt.Fprintf(writer, err.Error())
 			log.Print("Command not successful: ", err)
 			return
 		}
