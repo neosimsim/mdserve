@@ -14,21 +14,41 @@ package main
 //
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
-//
-// Copyright © Alexander Ben Nasrallah 2018 <abn@posteo.de>
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"os/exec"
 	"strings"
 )
 
+const placeholder = "%"
+
+var parser = "markdown"
+var parserArgs = []string{}
+
+func replaceOrAppend(buf []string, e string) []string {
+	replaced := false
+	for i, v := range buf {
+		if v == placeholder {
+			buf[i] = e
+			replaced = true
+		}
+	}
+	if !replaced {
+		buf = append(buf, e)
+	}
+	return buf
+}
+
 func handle(writer http.ResponseWriter, request *http.Request) {
 	if strings.HasSuffix(request.URL.Path, ".md") {
-		cmd := exec.Command("markdown", request.URL.Path[1:])
+		args := replaceOrAppend(parserArgs, request.URL.Path[1:])
+		cmd := exec.Command(parser, args...)
 		reader, err := cmd.StdoutPipe()
 		if err != nil {
 			fmt.Fprintf(writer, err.Error())
@@ -57,8 +77,20 @@ func handle(writer http.ResponseWriter, request *http.Request) {
 	}
 }
 
-// TODO usage mdserve [-p port] [markdown-cmd agrs...]
 func main() {
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "usage: %s [flags] [parser [parser args]]\n", os.Args[0])
+		fmt.Println("'%' as parser arg is replaced be the requested markdown file.")
+		flag.PrintDefaults()
+	}
+	port := flag.Uint("port", 8080, "the port to listen to")
+	flag.Parse()
+
+	if flag.NArg() > 0 {
+		parser = flag.Arg(0)
+		parserArgs = flag.Args()[1:]
+	}
+
 	http.HandleFunc("/", handle)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), nil))
 }
