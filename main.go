@@ -80,7 +80,13 @@ func handle(writer http.ResponseWriter, request *http.Request) {
 func main() {
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: %s [flags] [parser [parser args]]\n", os.Args[0])
-		fmt.Println("'%' as parser arg is replaced be the requested markdown file.")
+		fmt.Fprintf(os.Stderr, "\n")
+		fmt.Fprintf(os.Stderr, "Runs a file server which parses files ending with .md using the given parser.\n")
+		fmt.Fprintf(os.Stderr, "If no parser is given 'markdown' is assumed.\n")
+		fmt.Fprintf(os.Stderr, "'%s' as parser arg is replaced be the requested markdown file.\n", placeholder)
+		fmt.Fprintf(os.Stderr, "If no '%s' is present the file is simple appended to the arg list.\n", placeholder)
+		fmt.Fprintf(os.Stderr, "\n")
+		fmt.Fprintf(os.Stderr, "The following is a list of available flags:\n")
 		flag.PrintDefaults()
 	}
 	port := flag.Uint("port", 8080, "the port to listen to")
